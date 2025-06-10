@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*" # Trigger on version tags like v2025.5.0
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64]
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.24.0"
+
+      - name: Extract version without 'v'
+        id: version
+        run: echo "tag=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and package binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist tmpdist
+
+          EXT=""
+          ARCHIVE_EXT=""
+          if [[ "${{ matrix.goos }}" == "windows" ]]; then
+            EXT=".exe"
+            ARCHIVE_EXT="zip"
+          else
+            ARCHIVE_EXT="tar.gz"
+          fi
+
+          OUT_NAME="cartman-${{ matrix.goos }}-${{ matrix.goarch }}$EXT"
+          BIN_NAME="cartman$EXT"
+          BUILD_PATH="dist/$OUT_NAME"
+          ARCHIVE_NAME="cartman-${{ matrix.goos }}-${{ matrix.goarch }}.${ARCHIVE_EXT}"
+          ARCHIVE_PATH="dist/$ARCHIVE_NAME"
+
+          echo "Building $OUT_NAME..."
+
+          env CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} \
+            go build -ldflags="-s -w" -o "$BUILD_PATH" .
+
+          cp "$BUILD_PATH" "tmpdist/$BIN_NAME"
+
+          if [[ "${{ matrix.goos }}" != "windows" ]]; then
+            chmod +x "tmpdist/$BIN_NAME"
+            tar -czf "$ARCHIVE_PATH" -C tmpdist "$BIN_NAME"
+          else
+            zip -j "$ARCHIVE_PATH" "tmpdist/$BIN_NAME"
+          fi
+
+          echo "Packaged: $ARCHIVE_PATH"
+
+      - name: Upload archives to GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/*.zip
+          name: cartman ${{ steps.version.outputs.tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
