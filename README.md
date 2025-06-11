@@ -37,7 +37,7 @@ If you have Go **1.24.0** or newer, you can install Cartman directly:
 go install github.com/lechgu/cartman@latest
 ```
 
-The `cartman` binary will be placed in your `$GOPATH/bin` (or `$HOME/go/bin`), which should be in your `PATH`.
+The `cartman` binary will be placed in your `$GOPATH/bin` (or `$HOME/go/bin`), which should be in your `PATH`.at
 
 ### Build from Source
 
@@ -67,10 +67,10 @@ By default, the CA certificate is valid for **10 years**.
 ### Issue Leaf Certificates
 
 ```bash
-cartman issue --common-name localhost --dns localhost --ip 127.0.0.1
+cartman issue --name localhost --dns localhost --ip 127.0.0.1
 ```
 
-This creates a new folder named `localhost` (matching the `common-name`) with:
+This creates a new folder named `localhost` (matching the `name`) with:
 
 - `cert.pem` — leaf certificate valid for the provided DNS name(s) and/or IP(s)
 - `key.pem` — corresponding private key
@@ -80,7 +80,7 @@ By default, leaf certificates are valid for **1 year**. You can customize the va
 ### Example with Multiple DNS and IPs
 
 ```bash
-cartman issue --common-name myservice --dns myservice.local --dns myservice.internal --ip 10.0.0.10 --ip 10.0.0.11
+cartman issue --name myservice --dns myservice.local --dns myservice.internal --ip 10.0.0.10 --ip 10.0.0.11
 ```
 
 ## Trusting Cartman CA in Your System
@@ -100,7 +100,7 @@ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keyc
 ### Windows
 
 Run in an elevated PowerShell or Command Prompt:
-
+at
 ```bash
 certutil -addstore Root .cartman\cert.pem
 ```
